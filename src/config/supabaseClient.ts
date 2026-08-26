@@ -17,33 +17,22 @@
  *    NEVER log this key.
  *    NEVER include it in error messages.
  *
- * ─────────────────────────────────────────────────────────────────────────────
- * What is Row Level Security (RLS)?
- *
- * RLS is a Supabase/PostgreSQL feature that lets you define per-row access
- * rules directly in the database. For example: "a user can only read their
- * own profile" or "only a department admin can update their team's records."
- *
- * Without RLS, any code that connects to the database can read/write ANY
- * row. With RLS, the database itself enforces who can see what — even if
- * the application code has a bug. This is a critical safety net for a
- * government project handling citizen data.
- *
- * We will rely on RLS heavily throughout this project as a defense-in-depth
- * measure. The service role key should be the exception, not the rule.
- * ─────────────────────────────────────────────────────────────────────────────
+ * NOTE: The Database generic type is omitted for now because Supabase v2's
+ * type inference requires a specific structure that we'll generate via the
+ * Supabase CLI in a later step. For now, queries are untyped at the
+ * Supabase client level but validated by our controller logic (field
+ * allow-lists, RLS policies, etc.).
  */
 
 import { createClient } from '@supabase/supabase-js';
 import { env } from './env';
-import type { Database } from '../types/database';
 
 /**
  * The "normal" Supabase client — respects RLS.
  * Use this for all routine data access where the requesting user's identity
  * should determine what they can see and do.
  */
-export const supabaseAnon = createClient<Database>(
+export const supabaseAnon = createClient(
   env.SUPABASE_URL,
   env.SUPABASE_ANON_KEY
 );
@@ -63,7 +52,7 @@ export const supabaseAnon = createClient<Database>(
  * - Never log the service role key value
  * - If this key leaks, regenerate it immediately in the Supabase dashboard
  */
-export const supabaseServiceRole = createClient<Database>(
+export const supabaseServiceRole = createClient(
   env.SUPABASE_URL,
   env.SUPABASE_SERVICE_ROLE_KEY,
   {
