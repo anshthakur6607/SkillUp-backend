@@ -117,3 +117,172 @@ ON CONFLICT (source, external_id) DO NOTHING;
 -- COURSE-COMPETENCY MAPPINGS
 -- =============================================================================
 -- Link cour
+
+-- =============================================================================
+-- INDIAN STATES AND UNION TERRITORIES
+-- =============================================================================
+INSERT INTO public.indian_states (name, code, is_ut) VALUES
+  ('Andhra Pradesh', 'AP', false),
+  ('Arunachal Pradesh', 'AR', false),
+  ('Assam', 'AS', false),
+  ('Bihar', 'BR', false),
+  ('Chhattisgarh', 'CG', false),
+  ('Goa', 'GA', false),
+  ('Gujarat', 'GJ', false),
+  ('Haryana', 'HR', false),
+  ('Himachal Pradesh', 'HP', false),
+  ('Jharkhand', 'JH', false),
+  ('Karnataka', 'KA', false),
+  ('Kerala', 'KL', false),
+  ('Madhya Pradesh', 'MP', false),
+  ('Maharashtra', 'MH', false),
+  ('Manipur', 'MN', false),
+  ('Meghalaya', 'ML', false),
+  ('Mizoram', 'MZ', false),
+  ('Nagaland', 'NL', false),
+  ('Odisha', 'OD', false),
+  ('Punjab', 'PB', false),
+  ('Rajasthan', 'RJ', false),
+  ('Sikkim', 'SK', false),
+  ('Tamil Nadu', 'TN', false),
+  ('Telangana', 'TS', false),
+  ('Tripura', 'TR', false),
+  ('Uttar Pradesh', 'UP', false),
+  ('Uttarakhand', 'UK', false),
+  ('West Bengal', 'WB', false),
+  ('Andaman and Nicobar Islands', 'AN', true),
+  ('Chandigarh', 'CH', true),
+  ('Dadra and Nagar Haveli and Daman and Diu', 'DD', true),
+  ('Delhi', 'DL', true),
+  ('Jammu and Kashmir', 'JK', true),
+  ('Ladakh', 'LA', true),
+  ('Lakshadweep', 'LD', true),
+  ('Puducherry', 'PY', true)
+ON CONFLICT (name) DO NOTHING;
+
+-- =============================================================================
+-- CENTRAL GOVERNMENT MINISTRIES
+-- =============================================================================
+INSERT INTO public.central_ministries (name, short_name) VALUES
+  ('Ministry of Agriculture and Farmers Welfare', 'MoA'),
+  ('Ministry of Ayush', 'MoAY'),
+  ('Ministry of Chemicals and Fertilizers', 'MoCF'),
+  ('Ministry of Civil Aviation', 'MoCA'),
+  ('Ministry of Coal', 'MoC'),
+  ('Ministry of Commerce and Industry', 'MoCI'),
+  ('Ministry of Communications', 'MoCom'),
+  ('Ministry of Consumer Affairs, Food and Public Distribution', 'MoCAFPD'),
+  ('Ministry of Corporate Affairs', 'MoCorA'),
+  ('Ministry of Culture', 'MoCul'),
+  ('Ministry of Defence', 'MoD'),
+  ('Ministry of Development of North Eastern Region', 'DoNER'),
+  ('Ministry of Earth Sciences', 'MoES'),
+  ('Ministry of Education', 'MoE'),
+  ('Ministry of Electronics and Information Technology', 'MeitY'),
+  ('Ministry of Environment, Forest and Climate Change', 'MoEFCC'),
+  ('Ministry of External Affairs', 'MEA'),
+  ('Ministry of Finance', 'MoF'),
+  ('Ministry of Fisheries, Animal Husbandry and Dairying', 'MoFAHD'),
+  ('Ministry of Food Processing Industries', 'MoFPI'),
+  ('Ministry of Health and Family Welfare', 'MoHFW'),
+  ('Ministry of Heavy Industries', 'MoHI'),
+  ('Ministry of Home Affairs', 'MHA'),
+  ('Ministry of Housing and Urban Affairs', 'MoHUA'),
+  ('Ministry of Information and Broadcasting', 'MoI&B'),
+  ('Ministry of Jal Shakti', 'MoJS'),
+  ('Ministry of Labour and Employment', 'MoLE'),
+  ('Ministry of Law and Justice', 'MoLJ'),
+  ('Ministry of Micro, Small and Medium Enterprises', 'MoMSME'),
+  ('Ministry of Mines', 'MoM'),
+  ('Ministry of Minority Affairs', 'MoMA'),
+  ('Ministry of New and Renewable Energy', 'MNRE'),
+  ('Ministry of Panchayati Raj', 'MoPR'),
+  ('Ministry of Parliamentary Affairs', 'MoPA'),
+  ('Ministry of Personnel, Public Grievances and Pensions', 'DoPPW'),
+  ('Ministry of Petroleum and Natural Gas', 'MoPNG'),
+  ('Ministry of Pharmaceuticals', 'MoPh'),
+  ('Ministry of Planning', 'MoP'),
+  ('Ministry of Power', 'MoPwr'),
+  ('Ministry of Railways', 'MoR'),
+  ('Ministry of Road Transport and Highways', 'MoRTH'),
+  ('Ministry of Rural Development', 'MoRD'),
+  ('Ministry of Science and Technology', 'MoST'),
+  ('Ministry of Shipping', 'MoS'),
+  ('Ministry of Social Justice and Empowerment', 'MoSJE'),
+  ('Ministry of Statistics and Programme Implementation', 'MoSPI'),
+  ('Ministry of Steel', 'MoStl'),
+  ('Ministry of Textiles', 'MoT'),
+  ('Ministry of Tourism', 'MoTou'),
+  ('Ministry of Tribal Affairs', 'MoTA'),
+  ('Ministry of Women and Child Development', 'MoWCD'),
+  ('Ministry of Youth Affairs and Sports', 'MoYAS'),
+  ('NITI Aayog', 'NITI'),
+  ('Prime Ministers Office', 'PMO'),
+  ('Department of Space', 'DoS'),
+  ('Department of Atomic Energy', 'DAE')
+ON CONFLICT (name) DO NOTHING;
+
+-- =============================================================================
+-- SAMPLE ORGANISATIONS (Central Government)
+-- =============================================================================
+INSERT INTO public.organisations (name, ministry, org_type) VALUES
+  ('Central Statistical Office', 'Ministry of Statistics and Programme Implementation', 'central'),
+  ('National Sample Survey Office', 'Ministry of Statistics and Programme Implementation', 'central'),
+  ('National Statistical Commission', 'Ministry of Statistics and Programme Implementation', 'central'),
+  ('National Statistical System Training Academy', 'Ministry of Statistics and Programme Implementation', 'central'),
+  ('Office of the Registrar General and Census Commissioner', 'Ministry of Home Affairs', 'central'),
+  ('National Informatics Centre', 'Ministry of Electronics and Information Technology', 'central'),
+  ('Electronics Corporation of India Limited', 'Ministry of Defence', 'psu'),
+  ('National Institute of Smart Government', 'Ministry of Electronics and Information Technology', 'autonomous'),
+  ('Central Electricity Authority', 'Ministry of Power', 'central'),
+  ('Central Water Commission', 'Ministry of Jal Shakti', 'central'),
+  ('Survey of India', 'Ministry of Science and Technology', 'central'),
+  ('Geological Survey of India', 'Ministry of Mines', 'central'),
+  ('Indian Meteorological Department', 'Ministry of Earth Sciences', 'central'),
+  ('National Remote Sensing Centre', 'Department of Space', 'central'),
+  ('Indian Space Research Organisation', 'Department of Space', 'autonomous'),
+  ('National Centre for Geo-informatics', 'Ministry of Statistics and Programme Implementation', 'central'),
+  ('Data Analytics Division', 'NITI Aayog', 'central'),
+  ('National Database for Emergency Communications', 'Ministry of Home Affairs', 'central'),
+  ('Centralised Public Grievance Redress and Monitoring System', 'Ministry of Personnel, Public Grievances and Pensions', 'central'),
+  ('Unique Identification Authority of India', 'Ministry of Electronics and Information Technology', 'autonomous')
+ON CONFLICT DO NOTHING;
+
+-- =============================================================================
+-- SAMPLE ORGANISATIONS (State Government)
+-- =============================================================================
+INSERT INTO public.organisations (name, state, org_type) VALUES
+  ('Directorate of Statistics', 'Maharashtra', 'state'),
+  ('State Planning Board', 'Karnataka', 'state'),
+  ('Bureau of Economics and Statistics', 'Tamil Nadu', 'state'),
+  ('Department of Planning', 'Gujarat', 'state'),
+  ('State Institute of Rural Development', 'Rajasthan', 'state'),
+  ('Directorate of Economics and Statistics', 'Uttar Pradesh', 'state'),
+  ('Kerala State Planning Board', 'Kerala', 'state'),
+  ('Odisha State Planning Board', 'Odisha', 'state')
+ON CONFLICT DO NOTHING;
+
+-- =============================================================================
+-- DESIGNATIONS
+-- =============================================================================
+INSERT INTO public.designations (name, level) VALUES
+  ('Under Secretary', 'entry'),
+  ('Assistant Director', 'entry'),
+  ('Statistical Officer', 'entry'),
+  ('Section Officer', 'entry'),
+  ('Assistant Director General', 'entry'),
+  ('Deputy Secretary', 'mid'),
+  ('Joint Director', 'mid'),
+  ('Senior Statistical Officer', 'mid'),
+  ('Deputy Director General', 'mid'),
+  ('Director', 'senior'),
+  ('Chief Statistical Officer', 'senior'),
+  ('Additional Secretary', 'senior'),
+  ('Joint Secretary', 'senior'),
+  ('Secretary', 'executive'),
+  ('Director General', 'executive'),
+  ('Chief Secretary', 'executive'),
+  ('Additional Director General', 'executive'),
+  ('Vice Chairman', 'executive')
+ON CONFLICT (name) DO NOTHIN
+ON CONFLICT (name) DO NOTHING;

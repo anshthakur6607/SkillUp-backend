@@ -28,6 +28,7 @@ import { sanitizeInput } from './middleware/sanitize';
 import { AppError, errorHandler } from './middleware/errorHandler';
 import healthRoutes from './routes/health';
 import authRoutes from './routes/auth.routes';
+import lookupsRoutes from './routes/lookups.routes';
 
 // Importing supabaseClient ensures it initializes at startup.
 // If the Supabase URL or keys are invalid, we'll catch it early.
@@ -99,6 +100,7 @@ app.use(sanitizeInput);
 // All routes are prefixed with /api for a clean, versioned URL structure.
 app.use('/api', healthRoutes);
 app.use('/api', authRoutes);
+app.use('/api', lookupsRoutes);
 
 // ─── 8. 404 HANDLER ─────────────────────────────────────────────────────────
 // If no route matched the request, this middleware runs.
