@@ -1,6 +1,7 @@
 -- =============================================================================
--- Migration: 0002_helper_functions.sql
--- Purpose:   Create reusable SQL helper functions used by RLS policies.
+-- Migration: 0003_helper_functions.sql
+-- Purpose:   Create reusable SQL helper functions used by RLS policies
+--            and triggers.
 --
 --            WHY REUSABLE FUNCTIONS?
 --            If every RLS policy duplicates the role-lookup logic inline
@@ -15,6 +16,9 @@
 --            3. Fixing a bug in one place fixes it everywhere
 --            4. The function name reads like English in the policy,
 --               making the intent clear: "WHERE is_admin() OR id = auth.uid()"
+--
+--            This migration runs AFTER 0002_core_tables.sql, so the
+--            profiles table exists and these functions can reference it.
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
