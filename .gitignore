@@ -6,7 +6,8 @@ dist/
 
 # Environment variables — contains real secrets like API keys
 .env
-
+docs-hum/
+docs-hum/**
 # Log files — runtime logs should not be tracked
 *.log
 npm-debug.log*
