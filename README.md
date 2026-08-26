@@ -1,1 +1,1 @@
-# SkillUp
+# SkillUp backend
