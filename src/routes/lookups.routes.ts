@@ -3,7 +3,7 @@
  */
 import { Router } from "express";
 import { verifyAuth } from "../middleware/verifyAuth";
-import { getLookups, getOrganisationsByMinistry } from "../controllers/lookupsController";
+import { getLookups, getOrganisationsByFilter } from "../controllers/lookupsController";
 
 const router = Router();
 
@@ -17,6 +17,6 @@ router.get("/lookups/:type", verifyAuth, getLookups);
  * GET /api/lookups/organisations?ministry=X
  * Returns organisations filtered by ministry.
  */
-router.get("/lookups/organisations/filter", verifyAuth, getOrganisationsByMinistry);
+router.get("/lookups/organisations/filter", verifyAuth, getOrganisationsByFilter);
 
 export default router;
