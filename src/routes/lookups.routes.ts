@@ -3,7 +3,7 @@
  */
 import { Router } from "express";
 import { verifyAuth } from "../middleware/verifyAuth";
-import { getLookups, getOrganisationsByMinistry } from "../controllers/lookupsController";
+import { getLookups, getOrganisationsByMinistry, getDepartmentsByMinistry } from "../controllers/lookupsController";
 
 const router = Router();
 
@@ -18,5 +18,11 @@ router.get("/lookups/:type", verifyAuth, getLookups);
  * Returns organisations filtered by ministry.
  */
 router.get("/lookups/organisations/filter", verifyAuth, getOrganisationsByMinistry);
+
+/**
+ * GET /api/lookups/departments?ministry=X or ?state=X
+ * Returns sub-departments under a ministry or state.
+ */
+router.get("/lookups/departments/filter", verifyAuth, getDepartmentsByMinistry);
 
 export default router;
