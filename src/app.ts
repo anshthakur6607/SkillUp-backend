@@ -30,6 +30,7 @@ import healthRoutes from './routes/health';
 import authRoutes from './routes/auth.routes';
 import lookupsRoutes from './routes/lookups.routes';
 import integrationRoutes from './routes/integration.routes';
+import dashboardRoutes from './routes/dashboard.routes';
 
 // Importing supabaseClient ensures it initializes at startup.
 // If the Supabase URL or keys are invalid, we'll catch it early.
@@ -103,6 +104,7 @@ app.use('/api', healthRoutes);
 app.use('/api', authRoutes);
 app.use('/api', lookupsRoutes);
 app.use('/api', integrationRoutes);
+app.use('/api', dashboardRoutes);
 
 // ─── 8. 404 HANDLER ─────────────────────────────────────────────────────────
 // If no route matched the request, this middleware runs.

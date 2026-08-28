@@ -16,17 +16,19 @@
  *   (c) The service role client bypasses RLS, which is fine because we're only reading the role
  *       column for a user we've already verified owns this token
  *
- * Why no caching?
- * - Caching roles in memory risks stale data: if a user is demoted from admin to employee,
- *   the cache would still say "admin" until it expires, letting them retain elevated access
- * - At this stage, the performance cost of a DB lookup per request is negligible
- * - If performance becomes a concern later, we can add Redis caching with short TTLs,
- *   but the security tradeoff must be explicitly documented
+ * Uses Redis caching with a SHORT TTL (60 seconds) for role lookups.
+ * Short TTL balances performance with freshness — if a user is demoted,
+ * the cache will expire within a minute. Acceptable tradeoff for most apps.
  */
 
 import { Request, Response, NextFunction } from 'express';
 import { supabaseServiceRole } from '../config/supabaseClient';
 import { AppError } from './errorHandler';
+import { cacheGetOrSet } from '../config/redis';
+
+// Cache roles for 60 seconds — short enough that role changes take effect quickly,
+// long enough to eliminate repeated DB hits for the same user.
+const ROLE_CACHE_TTL = 60;
 
 /**
  * Creates middleware that checks if req.user has one of the allowed roles.
@@ -41,26 +43,29 @@ export function requireRole(...allowedRoles: string[]) {
   return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     try {
       if (!req.user?.id) {
-        // This shouldn't happen if verifyAuth ran first, but be defensive
         return next(new AppError('Authentication required', 401));
       }
 
-      // Look up the user's role from the profiles table using the service role client.
-      // We select only the `role` column — minimal data exposure even with service role.
-      const { data, error } = await supabaseServiceRole
-        .from('profiles')
-        .select('role')
-        .eq('id', req.user.id)
-        .single();
+      const cacheKey = `role:${req.user.id}`;
 
-      if (error || !data) {
-        // Profile doesn't exist — this could happen if the signup trigger hasn't run yet,
-        // or if the user's profile was deleted. Treat as unauthorized.
+      const userRole = await cacheGetOrSet<string>(
+        cacheKey,
+        ROLE_CACHE_TTL,
+        async () => {
+          const { data, error } = await supabaseServiceRole
+            .from('profiles')
+            .select('role')
+            .eq('id', req.user!.id)
+            .single();
+
+          if (error || !data) return null;
+          return (data as { role: string }).role;
+        },
+      );
+
+      if (!userRole) {
         return next(new AppError('Access denied', 403));
       }
-
-      // Type-safe role access
-      const userRole = (data as { role: string }).role;
 
       if (!allowedRoles.includes(userRole)) {
         return next(new AppError('Access denied', 403));
@@ -68,7 +73,6 @@ export function requireRole(...allowedRoles: string[]) {
 
       next();
     } catch {
-      // Don't leak internal details on unexpected errors
       return next(new AppError('Access denied', 403));
     }
   };

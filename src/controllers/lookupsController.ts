@@ -26,17 +26,24 @@ export async function getLookups(req: Request, res: Response, next: NextFunction
   }
 }
 
-export async function getOrganisationsByMinistry(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function getOrganisationsByFilter(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { ministry } = req.query;
-    if (!ministry || typeof ministry !== "string") {
-      return next(new AppError("ministry query parameter is required", 400));
-    }
-    const { data, error } = await supabaseAnon
+    const { ministry, state } = req.query;
+
+    let query = supabaseAnon
       .from("organisations")
       .select("*")
-      .eq("ministry", ministry)
       .order("name");
+
+    if (ministry && typeof ministry === "string") {
+      query = query.eq("ministry", ministry);
+    } else if (state && typeof state === "string") {
+      query = query.eq("state", state);
+    } else {
+      return next(new AppError("ministry or state query parameter is required", 400));
+    }
+
+    const { data, error } = await query;
     if (error) return next(new AppError("Failed to fetch organisations", 500));
     res.json({ status: "ok", data: data || [] });
   } catch {

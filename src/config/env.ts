@@ -52,6 +52,12 @@ const envSchema = z.object({
   // within a time window before being temporarily blocked.
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(900000), // 15 minutes
   RATE_LIMIT_MAX_REQUESTS: z.coerce.number().default(100),
+
+  // Upstash Redis — used for distributed rate limiting, session caching,
+  // and role caching. Required in production, optional in development
+  // (falls back to in-memory if not set).
+  UPSTASH_REDIS_REST_URL: z.string().url().optional(),
+  UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
 });
 
 /**
