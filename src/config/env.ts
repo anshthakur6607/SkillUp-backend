@@ -58,6 +58,13 @@ const envSchema = z.object({
   // (falls back to in-memory if not set).
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
+
+  // AI APIs — used for generating MCQ assessments.
+  // At least one must be configured for assessments to work.
+  // Gemini: https://aistudio.google.com/apikey (free tier available)
+  // Sarvam: https://sarvam.ai (Indian government-backed)
+  GEMINI_API_KEY: z.string().min(1).optional(),
+  SARVAM_API_KEY: z.string().min(1).optional(),
 });
 
 /**
