@@ -1,19 +1,113 @@
 /**
  * Course Controller
  *
- * Handles course listing, detail view, enrollment, and dummy course monitoring.
- *
- * Dummy monitoring system:
- * - When a user enrolls in a course, we create an enrollment row with status='not_started'
- * - When they "start" the course, status changes to 'in_progress' with started_at = now
- * - A timer runs server-side that auto-advances progress_percent based on duration_hours
- * - When progress reaches 100%, status becomes 'completed' and completed_at is set
- * - This simulates real iGOT course completion tracking for the hackathon demo
+ * Fetches courses from iGOT's public content API in real-time.
+ * Falls back to database if API is unavailable.
+ * Includes dummy enrollment/progress monitoring for demo.
  */
 
 import { Request, Response, NextFunction } from 'express';
 import { supabaseServiceRole } from '../config/supabaseClient';
 import { AppError } from '../middleware/errorHandler';
+
+// ─── iGOT COURSE IDs (real courses from the platform) ────────────────────────
+const IGOT_COURSE_IDS = [
+  'do_113923174474121216195',
+  'do_1141533540853432321675',
+  'do_1143166853070028801812',
+  'do_1143052789530787841562',
+  'do_113569878939262976132',
+];
+
+interface IGOTCourse {
+  id: string;
+  name: string;
+  description: string;
+  duration: string;
+  difficultyLevel: string;
+  instructions: string;
+  childNodes: string[];
+  leafNodes: string[];
+  appIcon: string;
+  posterImage: string;
+  source: string;
+  creator: string;
+  organisation: string[];
+  keywords: string[];
+}
+
+// Cache iGOT courses in memory (refresh every 5 minutes)
+let cachedCourses: IGOTCourse[] | null = null;
+let cacheTimestamp = 0;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+async function fetchIGOTCourse(id: string): Promise<IGOTCourse | null> {
+  try {
+    const resp = await fetch(
+      `https://igotkarmayogi.gov.in/api/content/v1/read/${id}`,
+      { signal: AbortSignal.timeout(10000) }
+    );
+    if (!resp.ok) return null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data: any = await resp.json();
+    const c = data?.result?.content;
+    if (!c) return null;
+
+    return {
+      id: c.identifier || id,
+      name: c.name || 'Untitled Course',
+      description: stripHtml(c.description || ''),
+      duration: c.duration || '0',
+      difficultyLevel: c.difficultyLevel || 'Beginner',
+      instructions: stripHtml(c.instructions || ''),
+      childNodes: c.childNodes || [],
+      leafNodes: c.leafNodes || [],
+      appIcon: c.appIcon || '',
+      posterImage: c.posterImage || '',
+      source: 'igot',
+      creator: c.creator || '',
+      organisation: c.organisation || [],
+      keywords: c.keywords || [],
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function fetchIGOTCourses(): Promise<IGOTCourse[]> {
+  const now = Date.now();
+  if (cachedCourses && now - cacheTimestamp < CACHE_TTL) {
+    return cachedCourses;
+  }
+
+  const results = await Promise.allSettled(
+    IGOT_COURSE_IDS.map((id) => fetchIGOTCourse(id))
+  );
+
+  const courses = results
+    .filter((r): r is PromiseFulfilledResult<IGOTCourse> => r.status === 'fulfilled' && r.value !== null)
+    .map((r) => r.value);
+
+  if (courses.length > 0) {
+    cachedCourses = courses;
+    cacheTimestamp = now;
+  }
+
+  return courses;
+}
+
+function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&rsquo;/g, "'")
+    .replace(/&mdash;/g, '—')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 // ─── GET ALL ACTIVE COURSES ──────────────────────────────────────────────────
 export async function getAllCourses(
@@ -22,39 +116,79 @@ export async function getAllCourses(
   next: NextFunction,
 ): Promise<void> {
   try {
-    const { source, search, page = '1', limit = '20' } = req.query;
-    const pageNum = Math.max(1, parseInt(page as string, 10) || 1);
-    const limitNum = Math.min(50, Math.max(1, parseInt(limit as string, 10) || 20));
-    const offset = (pageNum - 1) * limitNum;
+    const { source, search } = req.query;
 
-    let query = supabaseServiceRole
+    // Fetch from iGOT API
+    let courses = await fetchIGOTCourses();
+
+    // Also try database
+    const { data: dbCourses } = await supabaseServiceRole
       .from('courses')
-      .select('*', { count: 'exact' })
+      .select('*')
       .eq('is_active', true)
-      .order('title', { ascending: true });
+      .order('title');
 
+    if (dbCourses && dbCourses.length > 0) {
+      // Merge: add DB courses that aren't already from iGOT API
+      const igotIds = new Set(courses.map((c) => c.id));
+      for (const dc of dbCourses) {
+        if (!igotIds.has(dc.external_id || dc.id)) {
+          courses.push({
+            id: dc.id,
+            name: dc.title,
+            description: dc.description || '',
+            duration: String((dc.duration_hours || 0) * 3600),
+            difficultyLevel: 'Beginner',
+            instructions: '',
+            childNodes: [],
+            leafNodes: [],
+            appIcon: '',
+            posterImage: '',
+            source: dc.source || 'internal',
+            creator: '',
+            organisation: [],
+            keywords: [],
+          });
+        }
+      }
+    }
+
+    // Apply filters
     if (source && typeof source === 'string') {
-      query = query.eq('source', source);
+      courses = courses.filter((c) => c.source === source);
     }
     if (search && typeof search === 'string') {
-      query = query.ilike('title', `%${search}%`);
+      const q = (search as string).toLowerCase();
+      courses = courses.filter(
+        (c) =>
+          c.name.toLowerCase().includes(q) ||
+          c.description.toLowerCase().includes(q)
+      );
     }
 
-    query = query.range(offset, offset + limitNum - 1);
-
-    const { data, error, count } = await query;
-
-    if (error) {
-      return next(new AppError('Failed to fetch courses', 500));
-    }
+    // Transform for frontend
+    const result = courses.map((c) => ({
+      id: c.id,
+      title: c.name,
+      description: c.description,
+      source: c.source,
+      duration_hours: Math.round((parseInt(c.duration) / 3600) * 10) / 10 || 0.5,
+      external_url: `https://portal.igotkarmayogi.gov.in/public/toc/${c.id}/overview`,
+      is_active: true,
+      difficulty: c.difficultyLevel,
+      creator: c.creator,
+      organisation: c.organisation?.[0] || '',
+      keywords: c.keywords?.slice(0, 8) || [],
+      module_count: c.childNodes?.length || 0,
+    }));
 
     res.json({
-      data: data || [],
+      data: result,
       pagination: {
-        page: pageNum,
-        limit: limitNum,
-        total: count || 0,
-        totalPages: Math.ceil((count || 0) / limitNum),
+        page: 1,
+        limit: result.length,
+        total: result.length,
+        totalPages: 1,
       },
     });
   } catch {
@@ -62,7 +196,7 @@ export async function getAllCourses(
   }
 }
 
-// ─── GET SINGLE COURSE ───────────────────────────────────────────────────────
+// ─── GET SINGLE COURSE (with modules from iGOT API) ─────────────────────────
 export async function getCourseById(
   req: Request,
   res: Response,
@@ -71,14 +205,53 @@ export async function getCourseById(
   try {
     const { id } = req.params;
 
+    // Fetch from iGOT API
+    const igotCourse = await fetchIGOTCourse(id);
+
+    if (igotCourse) {
+      // Fetch module names for child nodes
+      const modules = await fetchIGOTModules(igotCourse.childNodes);
+
+      // If user is logged in, get their enrollment status
+      let enrollment = null;
+      if (req.user) {
+        const { data: enrollData } = await supabaseServiceRole
+          .from('enrollments')
+          .select('*')
+          .eq('user_id', req.user.id)
+          .eq('course_id', id)
+          .single();
+        enrollment = enrollData;
+      }
+
+      res.json({
+        data: {
+          id: igotCourse.id,
+          title: igotCourse.name,
+          description: igotCourse.description,
+          source: igotCourse.source,
+          duration_hours: Math.round((parseInt(igotCourse.duration) / 3600) * 10) / 10 || 0.5,
+          external_url: `https://portal.igotkarmayogi.gov.in/public/toc/${igotCourse.id}/overview`,
+          is_active: true,
+          difficulty: igotCourse.difficultyLevel,
+          creator: igotCourse.creator,
+          organisation: igotCourse.organisation?.[0] || '',
+          keywords: igotCourse.keywords || [],
+          instructions: igotCourse.instructions,
+          modules,
+          module_count: modules.length,
+          poster_image: igotCourse.posterImage,
+          app_icon: igotCourse.appIcon,
+        },
+        enrollment,
+      });
+      return;
+    }
+
+    // Fallback: try database
     const { data, error } = await supabaseServiceRole
       .from('courses')
-      .select(`
-        *,
-        course_competencies (
-          competencies ( id, name, description, domain_id )
-        )
-      `)
+      .select('*, course_competencies(competencies(id, name, description))')
       .eq('id', id)
       .eq('is_active', true)
       .single();
@@ -87,7 +260,6 @@ export async function getCourseById(
       return next(new AppError('Course not found', 404));
     }
 
-    // If user is logged in, get their enrollment status
     let enrollment = null;
     if (req.user) {
       const { data: enrollData } = await supabaseServiceRole
@@ -103,6 +275,58 @@ export async function getCourseById(
   } catch {
     next(new AppError('Failed to fetch course', 500));
   }
+}
+
+// ─── FETCH MODULE NAMES FROM iGOT ────────────────────────────────────────────
+async function fetchIGOTModules(
+  childNodeIds: string[]
+): Promise<Array<{ id: string; name: string; type: string; index: number }>> {
+  if (!childNodeIds || childNodeIds.length === 0) return [];
+
+  // Fetch in batches of 5 to avoid overwhelming the API
+  const modules: Array<{ id: string; name: string; type: string; index: number }> = [];
+  const batchSize = 5;
+
+  for (let i = 0; i < childNodeIds.length; i += batchSize) {
+    const batch = childNodeIds.slice(i, i + batchSize);
+    const results = await Promise.allSettled(
+      batch.map(async (nodeId) => {
+        try {
+        const resp = await fetch(
+          `https://igotkarmayogi.gov.in/api/content/v1/read/${nodeId}`,
+          { signal: AbortSignal.timeout(5000) }
+        );
+        if (!resp.ok) return null;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const data: any = await resp.json();
+        const c = data?.result?.content;
+          if (!c) return null;
+          return {
+            id: c.identifier || nodeId,
+            name: c.name || 'Untitled',
+            type: c.mimeType?.includes('video')
+              ? 'video'
+              : c.mimeType?.includes('quiz') || c.mimeType?.includes('question')
+              ? 'assessment'
+              : c.primaryCategory === 'CourseUnit'
+              ? 'module'
+              : 'resource',
+            index: i + batch.indexOf(nodeId),
+          };
+        } catch {
+          return null;
+        }
+      })
+    );
+
+    for (const r of results) {
+      if (r.status === 'fulfilled' && r.value) {
+        modules.push(r.value);
+      }
+    }
+  }
+
+  return modules.sort((a, b) => a.index - b.index);
 }
 
 // ─── ENROLL IN COURSE ────────────────────────────────────────────────────────
@@ -128,7 +352,6 @@ export async function enrollInCourse(
       .single();
 
     if (existing) {
-      // Already enrolled — return existing enrollment
       res.json({ data: existing, message: 'Already enrolled' });
       return;
     }
@@ -155,22 +378,7 @@ export async function enrollInCourse(
   }
 }
 
-// ─── START / PROGRESS COURSE (Dummy Monitoring) ──────────────────────────────
-/**
- * Dummy course monitoring system.
- *
- * When user starts a course:
- * - Status → 'in_progress', started_at = now
- * - Progress auto-advances based on course duration:
- *   - Short courses (≤2h): complete in 10 seconds for demo
- *   - Medium courses (2-8h): complete in 30 seconds
- *   - Long courses (>8h): complete in 60 seconds
- * - On complete: status → 'completed', completed_at = now, generates certificate
- *
- * The progress is calculated on-the-fly when the user polls their enrollment,
- * using the elapsed time since started_at vs the target duration.
- * No background process needed — pure timestamp math.
- */
+// ─── START COURSE (Dummy Monitoring) ─────────────────────────────────────────
 export async function startCourse(
   req: Request,
   res: Response,
@@ -184,7 +392,6 @@ export async function startCourse(
     const { courseId } = req.params;
     const userId = req.user.id;
 
-    // Get enrollment
     const { data: enrollment, error: enrollErr } = await supabaseServiceRole
       .from('enrollments')
       .select('*, courses!inner(id, duration_hours, title)')
@@ -193,31 +400,21 @@ export async function startCourse(
       .single();
 
     if (enrollErr || !enrollment) {
-      return next(new AppError('Not enrolled in this course. Enroll first.', 400));
+      return next(new AppError('Not enrolled. Enroll first.', 400));
     }
 
-    // If already completed, just return
     if (enrollment.status === 'completed') {
-      res.json({ data: enrollment, message: 'Course already completed' });
+      res.json({ data: enrollment, message: 'Already completed' });
       return;
     }
 
-    // If not started yet, mark as in_progress
     if (enrollment.status === 'not_started' || !enrollment.started_at) {
-      const { error: updateErr } = await supabaseServiceRole
+      await supabaseServiceRole
         .from('enrollments')
-        .update({
-          status: 'in_progress',
-          started_at: new Date().toISOString(),
-        })
+        .update({ status: 'in_progress', started_at: new Date().toISOString() })
         .eq('id', enrollment.id);
-
-      if (updateErr) {
-        return next(new AppError('Failed to start course', 500));
-      }
     }
 
-    // Re-fetch to get updated row
     const { data: updated } = await supabaseServiceRole
       .from('enrollments')
       .select('*, courses!inner(id, duration_hours, title)')
@@ -230,21 +427,7 @@ export async function startCourse(
   }
 }
 
-// ─── GET ENROLLMENT STATUS (with auto-progress calculation) ──────────────────
-/**
- * Returns the current enrollment with computed progress_percent.
- *
- * Progress is calculated from timestamps, not stored:
- *   elapsed = now - started_at
- *   target  = duration_hours converted to seconds, but compressed for demo:
- *     ≤2h course → 10s real time
- *     2-8h       → 30s real time
- *     >8h        → 60s real time
- *   progress = min(100, (elapsed / target) * 100)
- *
- * When progress hits 100, we update the enrollment to 'completed'
- * and generate a certificate.
- */
+// ─── GET ENROLLMENT STATUS ───────────────────────────────────────────────────
 export async function getEnrollmentStatus(
   req: Request,
   res: Response,
@@ -269,46 +452,36 @@ export async function getEnrollmentStatus(
       return;
     }
 
-    // If already completed, just return
     if (enrollment.status === 'completed') {
       res.json({ data: { ...enrollment, progress_percent: 100 } });
       return;
     }
 
-    // If not started, return as-is
     if (enrollment.status === 'not_started' || !enrollment.started_at) {
       res.json({ data: { ...enrollment, progress_percent: 0 } });
       return;
     }
 
-    // Calculate dummy progress based on elapsed time
+    // Calculate dummy progress
     const durationHours = (enrollment.courses as Record<string, unknown>)?.duration_hours as number || 4;
     const startedAt = new Date(enrollment.started_at).getTime();
-    const now = Date.now();
-    const elapsedMs = now - startedAt;
+    const elapsedMs = Date.now() - startedAt;
 
-    // Compress real time for demo:
-    // ≤2h course → 10s, 2-8h → 30s, >8h → 60s
     let targetSeconds: number;
-    if (durationHours <= 2) targetSeconds = 10;
+    if (durationHours <= 0.5) targetSeconds = 10;
+    else if (durationHours <= 2) targetSeconds = 20;
     else if (durationHours <= 8) targetSeconds = 30;
     else targetSeconds = 60;
 
-    const targetMs = targetSeconds * 1000;
-    const progressPercent = Math.min(100, Math.round((elapsedMs / targetMs) * 100));
+    const progressPercent = Math.min(100, Math.round((elapsedMs / (targetSeconds * 1000)) * 100));
 
-    // If completed, update the enrollment
     if (progressPercent >= 100 && enrollment.status !== 'completed') {
       await supabaseServiceRole
         .from('enrollments')
-        .update({
-          status: 'completed',
-          progress_percent: 100,
-          completed_at: new Date().toISOString(),
-        })
+        .update({ status: 'completed', progress_percent: 100, completed_at: new Date().toISOString() })
         .eq('id', enrollment.id);
 
-      // Generate certificate (if not already exists)
+      // Generate certificate
       const { data: existingCert } = await supabaseServiceRole
         .from('certificates')
         .select('id')
@@ -318,41 +491,21 @@ export async function getEnrollmentStatus(
 
       if (!existingCert) {
         const crypto = await import('crypto');
-        const verificationHash = crypto
-          .createHash('sha256')
-          .update(`${req.user.id}-${courseId}-${Date.now()}`)
-          .digest('hex');
-
+        const hash = crypto.createHash('sha256').update(`${req.user.id}-${courseId}-${Date.now()}`).digest('hex');
         await supabaseServiceRole.from('certificates').insert({
           user_id: req.user.id,
           course_id: courseId,
-          verification_hash: verificationHash,
+          verification_hash: hash,
         });
       }
 
       res.json({
-        data: {
-          ...enrollment,
-          status: 'completed',
-          progress_percent: 100,
-          completed_at: new Date().toISOString(),
-        },
+        data: { ...enrollment, status: 'completed', progress_percent: 100, completed_at: new Date().toISOString() },
       });
       return;
     }
 
-    // Update progress_percent in DB periodically (every 10%)
-    const storedProgress = enrollment.progress_percent || 0;
-    if (progressPercent - storedProgress >= 10) {
-      await supabaseServiceRole
-        .from('enrollments')
-        .update({ progress_percent: progressPercent })
-        .eq('id', enrollment.id);
-    }
-
-    res.json({
-      data: { ...enrollment, progress_percent: progressPercent },
-    });
+    res.json({ data: { ...enrollment, progress_percent: progressPercent } });
   } catch {
     next(new AppError('Failed to get enrollment status', 500));
   }
@@ -371,10 +524,7 @@ export async function getMyEnrollments(
 
     const { data, error } = await supabaseServiceRole
       .from('enrollments')
-      .select(`
-        *,
-        courses ( id, title, description, source, duration_hours, external_url )
-      `)
+      .select('*, courses(id, title, description, source, duration_hours, external_url)')
       .eq('user_id', req.user.id)
       .order('created_at', { ascending: false });
 
@@ -382,30 +532,7 @@ export async function getMyEnrollments(
       return next(new AppError('Failed to fetch enrollments', 500));
     }
 
-    // Compute live progress for in-progress enrollments
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const enriched = (data || []).map((enroll: any) => {
-      if (enroll.status === 'completed') {
-        return { ...enroll, computed_progress: 100 };
-      }
-      if (enroll.status === 'not_started' || !enroll.started_at) {
-        return { ...enroll, computed_progress: 0 };
-      }
-
-      const durationHours = (enroll.courses as Record<string, unknown> | null)?.duration_hours as number || 4;
-      const startedAt = new Date(enroll.started_at).getTime();
-      const elapsedMs = Date.now() - startedAt;
-
-      let targetSeconds: number;
-      if (durationHours <= 2) targetSeconds = 10;
-      else if (durationHours <= 8) targetSeconds = 30;
-      else targetSeconds = 60;
-
-      const progressPercent = Math.min(100, Math.round((elapsedMs / (targetSeconds * 1000)) * 100));
-      return { ...enroll, computed_progress: progressPercent };
-    });
-
-    res.json({ data: enriched });
+    res.json({ data: data || [] });
   } catch {
     next(new AppError('Failed to fetch enrollments', 500));
   }
