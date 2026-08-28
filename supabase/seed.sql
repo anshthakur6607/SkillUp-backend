@@ -90,315 +90,89 @@ WHERE d.name = 'Behavioural & Managerial'
 ON CONFLICT DO NOTHING;
 
 -- =============================================================================
--- COURSES — iGOT Karmayogi Full Catalog
+-- COURSES — Real iGOT Karmayogi Courses
 -- =============================================================================
--- Organized by category: Behavioural, Functional, Domain, Mandatory
--- Source: iGOT Karmayogi platform (https://igotkarmayogi.gov.in)
+-- Source: iGOT Karmayogi portal (https://igotkarmayogi.gov.in)
+-- IDs fetched from the Sunbird content API (real course IDs)
+-- Duration in seconds from iGOT, converted to hours for our schema.
 -- =============================================================================
 
--- ─── BEHAVIOURAL ───
 INSERT INTO public.courses (title, description, source, external_id, external_url, duration_hours) VALUES
-  ('Ethics in Governance', 'Understanding ethical frameworks, integrity, and transparency in public service delivery.', 'igot', 'IGOT-ETH-101', 'https://igotkarmayogi.gov.in/course/ethics-governance', 4),
-  ('Prevention of Sexual Harassment at Workplace', 'Mandatory course on POSH Act compliance, awareness, and reporting mechanisms.', 'igot', 'IGOT-POSH-101', 'https://igotkarmayogi.gov.in/course/posh-101', 1),
-  ('Leadership Fundamentals', 'Core leadership principles for government officials — decision-making, delegation, and team management.', 'igot', 'IGOT-LEAD-101', 'https://igotkarmayogi.gov.in/course/leadership-101', 3),
-  ('Effective Communication in Government', 'Writing clear office notes, RTI responses, and official correspondence.', 'igot', 'IGOT-COMM-101', 'https://igotkarmayogi.gov.in/course/communication-101', 2),
-  ('Right to Information Act — Practical Guide', 'Understanding RTI obligations, exemptions, and efficient response handling.', 'igot', 'IGOT-RTI-101', 'https://igotkarmayogi.gov.in/course/rti-101', 2),
-  ('Conduct Rules for Central Government Employees', 'CCS (Conduct) Rules, discipline, and accountability in government service.', 'igot', 'IGOT-CCS-101', 'https://igotkarmayogi.gov.in/course/ccs-conduct-101', 2),
-  ('Yoga and Wellness for Government Employees', 'Pranayama, stress management, and wellness practices for improved work performance.', 'igot', 'IGOT-YOGA-101', 'https://igotkarmayogi.gov.in/course/yoga-wellness', 1),
-  ('Gender Sensitization in Government', 'Creating inclusive workplaces, understanding gender bias, and promoting equality.', 'igot', 'IGOT-GENDER-101', 'https://igotkarmayogi.gov.in/course/gender-sensitization', 2)
-ON CONFLICT (source, external_id) DO NOTHING;
-
--- ─── FUNCTIONAL ───
-INSERT INTO public.courses (title, description, source, external_id, external_url, duration_hours) VALUES
-  ('Financial Management for Government', 'Budget preparation, expenditure management, and GFR compliance.', 'igot', 'IGOT-FM-101', 'https://igotkarmayogi.gov.in/course/financial-mgmt-101', 4),
-  ('Government Procurement (GEM)', 'GeM portal usage, tendering processes, and procurement rules.', 'igot', 'IGOT-PROC-101', 'https://igotkarmayogi.gov.in/course/procurement-gem', 3),
-  ('Microsoft Office Suite for Government', 'Word, Excel, PowerPoint — essential digital skills for daily office work.', 'igot', 'IGOT-MS-101', 'https://igotkarmayogi.gov.in/course/ms-office-101', 4),
-  ('Advanced Excel for Data Analysis', 'Pivot tables, VLOOKUP, data visualization, and reporting for government officials.', 'igot', 'IGOT-Excel-201', 'https://igotkarmayogi.gov.in/course/advanced-excel', 6),
-  ('SPARROW — Performance Management System', 'How to fill and manage APAR/ACR on the SPARROW portal.', 'igot', 'IGOT-SPARROW-101', 'https://igotkarmayogi.gov.in/course/sparrow-101', 1),
-  ('General Financial Rules (GFR) 2017', 'Comprehensive guide to GFR — delegation, financial powers, and audit compliance.', 'igot', 'IGOT-GFR-201', 'https://igotkarmayogi.gov.in/course/gfr-201', 5),
-  ('CCS (CCA) Rules — Classification & Control', 'Understanding classification of posts, service rules, and disciplinary proceedings.', 'igot', 'IGOT-CCR-101', 'https://igotkarmayogi.gov.in/course/ccs-cca-rules', 3),
-  ('MGNREGA — Implementation & Monitoring', 'Managing MGNREGA works, social audit, and convergence with other schemes.', 'igot', 'IGOT-MGNEREGA-101', 'https://igotkarmayogi.gov.in/course/mgnrega-101', 4)
-ON CONFLICT (source, external_id) DO NOTHING;
-
--- ─── DOMAIN (Statistical) ───
-INSERT INTO public.courses (title, description, source, external_id, external_url, duration_hours) VALUES
-  ('Fundamentals of Survey Sampling', 'Introduction to probability sampling methods used in national statistical surveys.', 'igot', 'IGOT-SURV-101', 'https://igotkarmayogi.gov.in/course/survey-sampling-101', 8),
-  ('Advanced Statistical Methods', 'Regression analysis, time series, and hypothesis testing for government surveys.', 'igot', 'IGOT-STAT-201', 'https://igotkarmayogi.gov.in/course/adv-stats-201', 10),
-  ('Data Quality Assurance in Surveys', 'Ensuring accuracy, completeness, and consistency in statistical data collection.', 'igot', 'IGOT-DQA-101', 'https://igotkarmayogi.gov.in/course/data-quality-101', 4),
-  ('Consumer Price Index — Calculation & Interpretation', 'Understanding CPI methodology, weightage, and its role in economic policy.', 'igot', 'IGOT-CPI-101', 'https://igotkarmayogi.gov.in/course/cpi-101', 3),
-  ('National Sample Survey — Design & Execution', 'NSSO survey methodology, field operations, and data processing.', 'igot', 'IGOT-NSS-101', 'https://igotkarmayogi.gov.in/course/nss-101', 6),
-  ('National Accounts — GDP Calculation', 'GDP estimation methodology, base year revision, and national accounts compilation.', 'igot', 'IGOT-GDP-101', 'https://igotkarmayogi.gov.in/course/gdp-calculation', 5)
-ON CONFLICT (source, external_id) DO NOTHING;
-
--- ─── DOMAIN (Technical/Digital) ───
-INSERT INTO public.courses (title, description, source, external_id, external_url, duration_hours) VALUES
-  ('Python Programming for Beginners', 'Introduction to Python — variables, loops, functions, and basic data structures.', 'igot', 'IGOT-PY-101', 'https://igotkarmayogi.gov.in/course/python-101', 8),
-  ('Python for Data Analysis', 'Hands-on Python for data wrangling, visualization, and statistical modeling using Pandas and Matplotlib.', 'igot', 'IGOT-PY-201', 'https://igotkarmayogi.gov.in/course/python-data-201', 12),
-  ('SQL for Government Data Management', 'Writing SQL queries, designing schemas, and managing government databases.', 'igot', 'IGOT-SQL-101', 'https://igotkarmayogi.gov.in/course/sql-101', 6),
-  ('R Programming for Statistical Computing', 'Using R for data analysis, visualization, and statistical modeling.', 'igot', 'IGOT-R-101', 'https://igotkarmayogi.gov.in/course/r-programming', 8),
-  ('Introduction to Artificial Intelligence', 'Understanding AI concepts, machine learning basics, and government use cases.', 'igot', 'IGOT-AI-101', 'https://igotkarmayogi.gov.in/course/ai-intro-101', 4),
-  ('Digital Personal Data Protection Act, 2023', 'Understanding the DPDP Act, consent management, and data fiduciary obligations.', 'igot', 'IGOT-DP-101', 'https://igotkarmayogi.gov.in/course/dpdp-act-101', 3),
-  ('Cybersecurity Awareness for Government', 'Recognizing phishing, social engineering, and common cyber attack vectors.', 'igot', 'IGOT-CYBER-101', 'https://igotkarmayogi.gov.in/course/cybersecurity-101', 2),
-  ('Digital India — E-Governance Frameworks', 'IndiaStack, DigiLocker, UMANG, and digital public infrastructure for government.', 'igot', 'IGOT-DIG-101', 'https://igotkarmayogi.gov.in/course/digital-india-101', 3),
-  ('GIS and Remote Sensing for Government', 'Using geographic information systems for planning, monitoring, and data visualization.', 'igot', 'IGOT-GIS-101', 'https://igotkarmayogi.gov.in/course/gis-101', 6),
-  ('Introduction to Bharatiya Nyaya Sanhita, 2023', 'Understanding the new criminal law replacing IPC — key changes and implications.', 'igot', 'IGOT-BNS-101', 'https://igotkarmayogi.gov.in/course/bns-101', 4),
-  ('Introduction to Bharatiya Nagarik Suraksha Sanhita, 2023', 'New criminal procedure code — changes in investigation, trial, and bail provisions.', 'igot', 'IGOT-BNSS-101', 'https://igotkarmayogi.gov.in/course/bnss-101', 4),
-  ('Open Data and Data Sharing in Government', 'Principles of open data, anonymization, and responsible data sharing.', 'igot', 'IGOT-OD-101', 'https://igotkarmayogi.gov.in/course/open-data-101', 3)
-ON CONFLICT (source, external_id) DO NOTHING;
-
--- ─── MANDATORY (APAR-Linked) ───
-INSERT INTO public.courses (title, description, source, external_id, external_url, duration_hours) VALUES
-  ('Annual Performance Appraisal Report (APAR) — Complete Guide', 'How to write, review, and complete APAR on SPARROW — mandatory for all officials.', 'igot', 'IGOT-APAR-101', 'https://igotkarmayogi.gov.in/course/apar-complete-guide', 1),
-  ('Annual Confidential Report (ACR) Best Practices', 'Writing effective self-appraisals and peer reviews for career progression.', 'igot', 'IGOT-ARC-101', 'https://igotkarmayogi.gov.in/course/acr-best-practices', 1),
-  ('Official Secrets Act — Security Awareness', 'Classification of documents, handling sensitive information, and security protocols.', 'igot', 'IGOT-SEC-101', 'https://igotkarmayogi.gov.in/course/official-secrets-101', 2),
-  ('Citizen Charter and Service Delivery', 'Understanding citizen charters, grievance redressal, and transparent governance.', 'igot', 'IGOT-CC-101', 'https://igotkarmayogi.gov.in/course/citizen-charter', 2),
-  ('Internal Complaints Committee — POSH Act', 'Roles and responsibilities of ICC members, inquiry procedures, and reporting.', 'igot', 'IGOT-POSH-ADV', 'https://igotkarmayogi.gov.in/course/icc-posh', 2),
-  ('Central Civil Services (CCA) Rules — Advanced', 'Detailed study of CCA Rules for officers handling disciplinary matters.', 'igot', 'IGOT-CCA-ADV', 'https://igotkarmayogi.gov.in/course/cca-advanced', 4)
-ON CONFLICT (source, external_id) DO NOTHING;
-
--- ─── NSSTA TPAC ───
-INSERT INTO public.courses (title, description, source, external_id, external_url, duration_hours) VALUES
-  ('Data Privacy in Government (NSSTA)', 'Understanding the Digital Personal Data Protection Act and implementing privacy safeguards.', 'nssta_tpac', 'NSSTA-PRIV-201', 'https://nssta.gov.in/tpac/data-privacy-201', 6),
-  ('Advanced Survey Methods Workshop', '5-day intensive workshop on advanced sampling and estimation techniques.', 'nssta_tpac', 'NSSTA-SURV-301', 'https://nssta.gov.in/tpac/survey-advanced-301', 40)
-ON CONFLICT (source, external_id) DO NOTHING;
-
--- ─── INTERNAL ───
-INSERT INTO public.courses (title, description, source, external_id, external_url, duration_hours) VALUES
-  ('Python for Statistical Analysis', 'Hands-on Python course covering data wrangling, visualization, and statistical modeling.', 'internal', NULL, NULL, 12),
-  ('Advanced SQL for Data Analysis', 'Complex queries, window functions, CTEs, and database optimization.', 'internal', NULL, NULL, 10)
+  (
+    'AI Using Google Bard and ChatGPT for Beginners',
+    'Comprehensive introduction to generative AI through Google Bard and ChatGPT. Learn to draft emails, generate ideas, create content, analyze data with Code Interpreter, and understand privacy and ethical considerations when using AI tools in government operations.',
+    'igot',
+    'do_113923174474121216195',
+    'https://portal.igotkarmayogi.gov.in/public/toc/do_113923174474121216195/overview',
+    0.42
+  ),
+  (
+    'Training Module on Swachata Hi Seva - 2024',
+    'Comprehensive overview of the Swachhata Hi Seva (SHS) 2024 campaign. Covers the theme Swabhav Swachhata - Sanskaar Swachhata, promoting cleanliness as a natural habit and cultural value across government offices.',
+    'igot',
+    'do_1141533540853432321675',
+    'https://portal.igotkarmayogi.gov.in/public/toc/do_1141533540853432321675/overview',
+    0.33
+  ),
+  (
+    'Civil Defence Services',
+    'Detailed understanding of the civil defence framework in India. Covers how civil defence organisations respond during emergencies, disasters, and wartime situations to protect citizens and critical infrastructure.',
+    'igot',
+    'do_1143166853070028801812',
+    'https://portal.igotkarmayogi.gov.in/public/toc/do_1143166853070028801812/overview',
+    1.28
+  ),
+  (
+    'Fire Safety in Healthcare Facilities',
+    'Fire safety challenges in healthcare settings — vulnerable patients, high-value equipment, and combustible materials. Covers prevention, evacuation protocols, and compliance with fire safety regulations.',
+    'igot',
+    'do_1143052789530787841562',
+    'https://portal.igotkarmayogi.gov.in/public/toc/do_1143052789530787841562/overview',
+    1.38
+  ),
+  (
+    'Prevention of Sexual Harassment of Women at Workplace',
+    'Mandatory course educating all employees on preventing sexual harassment. Covers the Sexual Harassment of Women at Workplace (Prevention, Prohibition and Redressal) Act, 2013, ICC procedures, and reporting mechanisms.',
+    'igot',
+    'do_113569878939262976132',
+    'https://portal.igotkarmayogi.gov.in/public/toc/do_113569878939262976132/overview',
+    1.87
+  )
 ON CONFLICT (source, external_id) DO NOTHING;
 
 -- =============================================================================
 -- COURSE-COMPETENCY MAPPINGS
--- Maps each course to the competencies it addresses.
--- Used by the recommendation engine to suggest courses for skill gaps.
+-- Maps each real iGOT course to the competencies it addresses.
 -- =============================================================================
 
--- ─── Behavioural courses ───
+-- AI Using Google Bard and ChatGPT for Beginners
 INSERT INTO public.course_competencies (course_id, competency_id)
 SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-ETH-101' AND comp.name IN ('Leadership', 'Critical Thinking')
+WHERE c.external_id = 'do_113923174474121216195' AND comp.name IN ('Python Programming', 'Data Analysis & Interpretation')
 ON CONFLICT DO NOTHING;
 
+-- Swachata Hi Seva - 2024
 INSERT INTO public.course_competencies (course_id, competency_id)
 SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-POSH-101' AND comp.name IN ('Communication', 'Collaboration')
+WHERE c.external_id = 'do_1141533540853432321675' AND comp.name IN ('Collaboration', 'Communication')
 ON CONFLICT DO NOTHING;
 
+-- Civil Defence Services
 INSERT INTO public.course_competencies (course_id, competency_id)
 SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-LEAD-101' AND comp.name IN ('Leadership', 'Project Management')
+WHERE c.external_id = 'do_1143166853070028801812' AND comp.name IN ('Critical Thinking', 'Leadership')
 ON CONFLICT DO NOTHING;
 
+-- Fire Safety in Healthcare Facilities
 INSERT INTO public.course_competencies (course_id, competency_id)
 SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-COMM-101' AND comp.name = 'Communication'
+WHERE c.external_id = 'do_1143052789530787841562' AND comp.name IN ('Critical Thinking', 'Project Management')
 ON CONFLICT DO NOTHING;
 
+-- Prevention of Sexual Harassment of Women at Workplace
 INSERT INTO public.course_competencies (course_id, competency_id)
 SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-RTI-101' AND comp.name IN ('Communication', 'Critical Thinking')
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-CCS-101' AND comp.name = 'Leadership'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-YOGA-101' AND comp.name = 'Collaboration'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-GENDER-101' AND comp.name IN ('Communication', 'Collaboration')
-ON CONFLICT DO NOTHING;
-
--- ─── Functional courses ───
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-FM-101' AND comp.name = 'Project Management'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-PROC-101' AND comp.name = 'Project Management'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-MS-101' AND comp.name = 'Python Programming'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-Excel-201' AND comp.name IN ('Python Programming', 'Data Analysis & Interpretation')
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-SPARROW-101' AND comp.name = 'Project Management'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-GFR-201' AND comp.name IN ('Project Management', 'Critical Thinking')
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-CCR-101' AND comp.name = 'Leadership'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-MGNEREGA-101' AND comp.name IN ('Project Management', 'Data Analysis & Interpretation')
-ON CONFLICT DO NOTHING;
-
--- ─── Domain (Statistical) ───
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-SURV-101' AND comp.name IN ('Survey Design', 'Sampling Techniques')
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-STAT-201' AND comp.name IN ('Statistical Inference', 'Data Analysis & Interpretation')
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-DQA-101' AND comp.name IN ('Data Quality Assurance', 'Survey Design')
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-CPI-101' AND comp.name IN ('Statistical Inference', 'Data Analysis & Interpretation')
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-NSS-101' AND comp.name IN ('Survey Design', 'Sampling Techniques', 'Data Quality Assurance')
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-GDP-101' AND comp.name IN ('Statistical Inference', 'Data Analysis & Interpretation')
-ON CONFLICT DO NOTHING;
-
--- ─── Domain (Technical/Digital) ───
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-PY-101' AND comp.name = 'Python Programming'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-PY-201' AND comp.name IN ('Python Programming', 'Data Analysis & Interpretation')
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-SQL-101' AND comp.name = 'SQL & Database Management'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-R-101' AND comp.name IN ('R Programming', 'Data Analysis & Interpretation')
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-AI-101' AND comp.name IN ('Python Programming', 'Data Analysis & Interpretation')
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-DP-101' AND comp.name IN ('Data Privacy & Protection', 'Cybersecurity Awareness')
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-CYBER-101' AND comp.name = 'Cybersecurity Awareness'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-DIG-101' AND comp.name = 'E-Governance Frameworks'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-GIS-101' AND comp.name IN ('Data Engineering', 'Cloud Computing')
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-BNS-101' AND comp.name = 'Critical Thinking'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-BNSS-101' AND comp.name = 'Critical Thinking'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-OD-101' AND comp.name IN ('Open Data & Data Sharing', 'Data Privacy & Protection')
-ON CONFLICT DO NOTHING;
-
--- ─── Mandatory (APAR-Linked) ───
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-APAR-101' AND comp.name = 'Project Management'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-ARC-101' AND comp.name IN ('Communication', 'Leadership')
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-SEC-101' AND comp.name = 'Cybersecurity Awareness'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-CC-101' AND comp.name IN ('Communication', 'E-Governance Frameworks')
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-POSH-ADV' AND comp.name IN ('Leadership', 'Communication')
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'IGOT-CCA-ADV' AND comp.name IN ('Leadership', 'Critical Thinking')
-ON CONFLICT DO NOTHING;
-
--- ─── NSSTA TPAC courses ───
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'NSSTA-PRIV-201' AND comp.name IN ('Data Privacy & Protection', 'Cybersecurity Awareness')
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.external_id = 'NSSTA-SURV-301' AND comp.name IN ('Survey Design', 'Sampling Techniques', 'Statistical Inference')
-ON CONFLICT DO NOTHING;
-
--- ─── Internal courses ───
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.title = 'Python for Statistical Analysis' AND comp.name IN ('Python Programming', 'Data Analysis & Interpretation')
-ON CONFLICT DO NOTHING;
-
-INSERT INTO public.course_competencies (course_id, competency_id)
-SELECT c.id, comp.id FROM public.courses c, public.competencies comp
-WHERE c.title = 'Advanced SQL for Data Analysis' AND comp.name = 'SQL & Database Management'
+WHERE c.external_id = 'do_113569878939262976132' AND comp.name IN ('Communication', 'Collaboration')
 ON CONFLICT DO NOTHING;
 
 -- =============================================================================
