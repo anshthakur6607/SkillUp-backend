@@ -39,6 +39,7 @@ import aiRoutes from './routes/ai.routes';
 import recommendationRoutes from './routes/recommendation.routes';
 import competencySnapshotRoutes from './routes/competencySnapshot.routes';
 import whatIfRoutes from './routes/whatIf.routes';
+import translateRoutes from './routes/translate.routes';
 
 // Importing supabaseClient ensures it initializes at startup.
 // If the Supabase URL or keys are invalid, we'll catch it early.
@@ -121,6 +122,7 @@ app.use('/api', aiRoutes);
 app.use('/api', recommendationRoutes);
 app.use('/api', competencySnapshotRoutes);
 app.use('/api', whatIfRoutes);
+app.use('/api', translateRoutes);
 
 // ─── 8. 404 HANDLER ─────────────────────────────────────────────────────────
 // If no route matched the request, this middleware runs.
