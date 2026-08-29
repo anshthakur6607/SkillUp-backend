@@ -343,12 +343,52 @@ export async function enrollInCourse(
     const { courseId } = req.params;
     const userId = req.user.id;
 
+    // The courseId might be an iGOT string ID (e.g. "do_11392...") or a UUID.
+    // We need a UUID to reference in the enrollments table.
+    let dbCourseId = courseId;
+
+    // Check if courseId is already a UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(courseId)) {
+      // It's an iGOT external ID — look up or create the course row
+      const { data: existingCourse } = await supabaseServiceRole
+        .from('courses')
+        .select('id')
+        .eq('external_id', courseId)
+        .single();
+
+      if (existingCourse) {
+        dbCourseId = existingCourse.id;
+      } else {
+        // Create the course row from iGOT data
+        const igotCourse = await fetchIGOTCourse(courseId);
+        const { data: newCourse, error: insertErr } = await supabaseServiceRole
+          .from('courses')
+          .insert({
+            title: igotCourse?.name || courseId,
+            description: igotCourse?.description || '',
+            source: 'igot',
+            external_id: courseId,
+            external_url: `https://portal.igotkarmayogi.gov.in/public/toc/${courseId}/overview`,
+            duration_hours: igotCourse ? Math.round((parseInt(igotCourse.duration) / 3600) * 10) / 10 || 0.5 : 0.5,
+            is_active: true,
+          })
+          .select('id')
+          .single();
+
+        if (insertErr || !newCourse) {
+          return next(new AppError('Failed to create course record', 500));
+        }
+        dbCourseId = newCourse.id;
+      }
+    }
+
     // Check if already enrolled
     const { data: existing } = await supabaseServiceRole
       .from('enrollments')
       .select('id, status')
       .eq('user_id', userId)
-      .eq('course_id', courseId)
+      .eq('course_id', dbCourseId)
       .single();
 
     if (existing) {
@@ -361,7 +401,7 @@ export async function enrollInCourse(
       .from('enrollments')
       .insert({
         user_id: userId,
-        course_id: courseId,
+        course_id: dbCourseId,
         status: 'not_started',
         progress_percent: 0,
       })
@@ -369,13 +409,27 @@ export async function enrollInCourse(
       .single();
 
     if (error) {
-      return next(new AppError('Failed to enroll', 500));
+      return next(new AppError('Failed to enroll: ' + (error.message || 'unknown'), 500));
     }
 
     res.status(201).json({ data, message: 'Enrolled successfully' });
   } catch {
     next(new AppError('Failed to enroll', 500));
   }
+}
+
+// ─── HELPER: resolve iGOT ID to DB UUID ─────────────────────────────────────
+async function resolveCourseId(courseId: string): Promise<string> {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (uuidRegex.test(courseId)) return courseId;
+
+  const { data } = await supabaseServiceRole
+    .from('courses')
+    .select('id')
+    .eq('external_id', courseId)
+    .single();
+
+  return data?.id || courseId;
 }
 
 // ─── START COURSE (Dummy Monitoring) ─────────────────────────────────────────
@@ -389,7 +443,7 @@ export async function startCourse(
       return next(new AppError('Authentication required', 401));
     }
 
-    const { courseId } = req.params;
+    const courseId = await resolveCourseId(req.params.courseId);
     const userId = req.user.id;
 
     const { data: enrollment, error: enrollErr } = await supabaseServiceRole
@@ -438,7 +492,7 @@ export async function getEnrollmentStatus(
       return next(new AppError('Authentication required', 401));
     }
 
-    const { courseId } = req.params;
+    const courseId = await resolveCourseId(req.params.courseId);
 
     const { data: enrollment, error } = await supabaseServiceRole
       .from('enrollments')
