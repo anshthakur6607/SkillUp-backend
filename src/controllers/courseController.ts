@@ -213,13 +213,15 @@ export async function getCourseById(
       const modules = await fetchIGOTModules(igotCourse.childNodes);
 
       // If user is logged in, get their enrollment status
+      // id is the iGOT string ID, but enrollments stores a UUID foreign key
       let enrollment = null;
       if (req.user) {
+        const dbCourseId = await resolveCourseId(id);
         const { data: enrollData } = await supabaseServiceRole
           .from('enrollments')
           .select('*')
           .eq('user_id', req.user.id)
-          .eq('course_id', id)
+          .eq('course_id', dbCourseId)
           .single();
         enrollment = enrollData;
       }
@@ -266,7 +268,7 @@ export async function getCourseById(
         .from('enrollments')
         .select('*')
         .eq('user_id', req.user.id)
-        .eq('course_id', id)
+        .eq('course_id', data.id)
         .single();
       enrollment = enrollData;
     }
