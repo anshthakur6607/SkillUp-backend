@@ -29,6 +29,7 @@
  */
 
 import { env } from '../config/env';
+import { buildBloomPrompt, type BloomLevel, bloomToIRT, type IRTParameters, BLOOM_LEVELS } from './bloomIrtService';
 
 interface MCQQuestion {
   question: string;
@@ -37,6 +38,8 @@ interface MCQQuestion {
   explanation: string;
   difficulty: 'beginner' | 'intermediate' | 'advanced';
   competency: string;
+  bloomLevel?: BloomLevel;
+  irt?: IRTParameters;
 }
 
 interface AIResponse {
@@ -155,38 +158,7 @@ async function callModel(
  * Build the MCQ generation prompt.
  */
 function buildPrompt(courseTitle: string, competencies: string[], difficulty: string, count: number): string {
-  return `Generate exactly ${count} multiple-choice questions (MCQs) for a government training course assessment.
-
-COURSE: ${courseTitle}
-COMPETENCIES: ${competencies.join(', ')}
-DIFFICULTY LEVEL: ${difficulty}
-
-DIFFICULTY GUIDELINES:
-- beginner: Recall and recognition questions. "What is...", "Which of the following...", basic definitions.
-- intermediate: Application questions. "How would you apply...", "Which method is best for...", scenario-based.
-- advanced: Analysis and evaluation questions. "Why is X better than Y in this context...", complex scenarios, edge cases.
-
-RULES:
-1. Each question must have exactly 4 options (A, B, C, D)
-2. Exactly ONE option must be correct
-3. Questions should be specific to Indian government context where applicable
-4. Include a brief explanation for the correct answer
-5. Do NOT include the letters (A, B, C, D) in the options — just the text
-6. Make distractors plausible but clearly wrong to someone who knows the material
-
-Respond in this EXACT JSON format (no markdown, no code blocks):
-{
-  "questions": [
-    {
-      "question": "Question text here?",
-      "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
-      "correctAnswer": "Option 1",
-      "explanation": "Brief explanation of why this is correct.",
-      "difficulty": "${difficulty}",
-      "competency": "Relevant competency name"
-    }
-  ]
-}`;
+  return buildBloomPrompt(courseTitle, competencies, difficulty, count);
 }
 
 /**
@@ -274,14 +246,20 @@ function parseMCQResponse(text: string): MCQQuestion[] {
 
   if (!Array.isArray(questions)) throw new Error('Questions is not an array');
 
-  return questions.map((q: Record<string, unknown>) => ({
-    question: String(q.question || ''),
-    options: Array.isArray(q.options) ? q.options.map(String) : [],
-    correctAnswer: String(q.correctAnswer || q.correct_answer || ''),
-    explanation: String(q.explanation || ''),
-    difficulty: String(q.difficulty || 'intermediate') as 'beginner' | 'intermediate' | 'advanced',
-    competency: String(q.competency || ''),
-  })).filter((q: MCQQuestion) => q.question && q.options.length === 4 && q.correctAnswer);
+  return questions.map((q: Record<string, unknown>) => {
+    const bloomLevel = (q.bloomLevel || q.bloom_level || q.bloom || '') as BloomLevel;
+    const irtParams = bloomLevel ? bloomToIRT(bloomLevel) : undefined;
+    return {
+      question: String(q.question || ''),
+      options: Array.isArray(q.options) ? q.options.map(String) : [],
+      correctAnswer: String(q.correctAnswer || q.correct_answer || ''),
+      explanation: String(q.explanation || ''),
+      difficulty: String(q.difficulty || 'intermediate') as 'beginner' | 'intermediate' | 'advanced',
+      competency: String(q.competency || ''),
+      bloomLevel: (BLOOM_LEVELS as readonly string[]).includes(bloomLevel) ? bloomLevel as BloomLevel : undefined,
+      irt: irtParams,
+    };
+  }).filter((q: MCQQuestion) => q.question && q.options.length === 4 && q.correctAnswer);
 }
 
 /**

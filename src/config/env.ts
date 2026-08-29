@@ -65,6 +65,7 @@ const envSchema = z.object({
   // Sarvam: https://sarvam.ai (Indian government-backed)
   GEMINI_API_KEY: z.string().min(1).optional(),
   SARVAM_API_KEY: z.string().min(1).optional(),
+  BHASHINI_API_KEY: z.string().min(1).optional(),
 });
 
 /**
