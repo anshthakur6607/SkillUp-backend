@@ -85,43 +85,75 @@ function nextLevelXp(level: number): number {
  * Get or create gamification profile for a user.
  */
 export async function getGamificationProfile(userId: string): Promise<GamificationProfile> {
-  // Get XP from user_competency_scores sum or a dedicated table
-  const { data: scores } = await supabaseServiceRole
-    .from('user_competency_scores')
-    .select('score')
+  // Try to get from user_xp table first
+  let { data: xpRow } = await supabaseServiceRole
+    .from('user_xp')
+    .select('*')
+    .eq('user_id', userId)
+    .single();
+
+  // If no row exists, create one by calculating from existing data
+  if (!xpRow) {
+    const { data: scores } = await supabaseServiceRole
+      .from('user_competency_scores')
+      .select('score')
+      .eq('user_id', userId);
+
+    const { data: enrollments } = await supabaseServiceRole
+      .from('enrollments')
+      .select('id, status')
+      .eq('user_id', userId);
+
+    const { data: certs } = await supabaseServiceRole
+      .from('certificates')
+      .select('id')
+      .eq('user_id', userId);
+
+    const completedCount = (enrollments || []).filter((e) => e.status === 'completed').length;
+    const certCount = (certs || []).length;
+    const competencyScore = (scores || []).reduce((sum, s) => sum + (s.score || 0), 0);
+
+    const totalXp = Math.round(
+      competencyScore * 0.5 +
+      completedCount * 50 +
+      certCount * 30
+    );
+
+    const level = calculateLevel(totalXp);
+    const streak = await calculateStreak(userId);
+
+    // Create the user_xp row
+    await supabaseServiceRole.from('user_xp').insert({
+      user_id: userId,
+      total_xp: totalXp,
+      level,
+      current_streak: streak,
+      longest_streak: streak,
+      last_activity_date: new Date().toISOString().split('T')[0],
+    });
+
+    xpRow = { total_xp: totalXp, level, current_streak: streak, longest_streak: streak };
+  }
+
+  const xp = xpRow.total_xp;
+  const level = xpRow.level;
+
+  // Get earned badges from database
+  const { data: badgeRows } = await supabaseServiceRole
+    .from('user_badges')
+    .select('*')
     .eq('user_id', userId);
 
-  // Calculate total XP (sum of all competency scores + completions * 50)
-  const { data: enrollments } = await supabaseServiceRole
-    .from('enrollments')
-    .select('id, status')
-    .eq('user_id', userId);
+  const badges: Badge[] = (badgeRows || []).map((b) => ({
+    id: b.badge_id,
+    name: b.badge_name,
+    description: b.badge_description || '',
+    icon: 'Award',
+    earnedAt: b.earned_at,
+    category: b.badge_category,
+  }));
 
-  const { data: certs } = await supabaseServiceRole
-    .from('certificates')
-    .select('id')
-    .eq('user_id', userId);
-
-  const completedCount = (enrollments || []).filter((e) => e.status === 'completed').length;
-  const certCount = (certs || []).length;
-  const competencyScore = (scores || []).reduce((sum, s) => sum + (s.score || 0), 0);
-
-  // Calculate XP
-  const xp = Math.round(
-    competencyScore * 0.5 + // From competency scores
-    completedCount * 50 +   // From course completions
-    certCount * 30          // From certificates
-  );
-
-  const level = calculateLevel(xp);
-
-  // Get earned badges
-  const badges = await getEarnedBadges(userId, completedCount, certCount);
-
-  // Get streak
-  const streak = await calculateStreak(userId);
-
-  // Get recent activity
+  const streak = xpRow.current_streak || 0;
   const recentActivity = await getRecentActivity(userId);
 
   return {

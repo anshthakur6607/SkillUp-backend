@@ -35,6 +35,10 @@ import assessmentRoutes from './routes/assessment.routes';
 import courseRoutes from './routes/course.routes';
 import gamificationRoutes from './routes/gamification.routes';
 import heatmapRoutes from './routes/heatmap.routes';
+import aiRoutes from './routes/ai.routes';
+import recommendationRoutes from './routes/recommendation.routes';
+import competencySnapshotRoutes from './routes/competencySnapshot.routes';
+import whatIfRoutes from './routes/whatIf.routes';
 
 // Importing supabaseClient ensures it initializes at startup.
 // If the Supabase URL or keys are invalid, we'll catch it early.
@@ -113,6 +117,10 @@ app.use('/api', assessmentRoutes);
 app.use('/api', courseRoutes);
 app.use('/api', gamificationRoutes);
 app.use('/api', heatmapRoutes);
+app.use('/api', aiRoutes);
+app.use('/api', recommendationRoutes);
+app.use('/api', competencySnapshotRoutes);
+app.use('/api', whatIfRoutes);
 
 // ─── 8. 404 HANDLER ─────────────────────────────────────────────────────────
 // If no route matched the request, this middleware runs.

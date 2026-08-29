@@ -41,78 +41,50 @@ export interface HeatmapData {
  * Aggregated — never returns individual user data.
  */
 export async function generateHeatmap(): Promise<HeatmapData> {
-  // Get all departments
-  const { data: deptData } = await supabaseServiceRole
-    .from('departments')
-    .select('name')
-    .order('name');
+  // Use the database function for aggregated heatmap data
+  const { data: rows, error } = await supabaseServiceRole
+    .rpc('get_skill_heatmap');
 
-  const departments = (deptData || []).map((d) => d.name);
-  if (departments.length === 0) {
-    departments.push('General');
+  if (error || !rows || rows.length === 0) {
+    // Fallback: return empty heatmap
+    return {
+      departments: [],
+      competencies: [],
+      cells: [],
+      summary: {
+        overallAverage: 0,
+        weakestDepartment: '',
+        strongestDepartment: '',
+        weakestCompetency: '',
+        strongestCompetency: '',
+      },
+    };
   }
 
-  // Get all competencies with their domains
-  const { data: compData } = await supabaseServiceRole
-    .from('competencies')
-    .select('name, competency_domains(name)')
-    .order('name');
+  // Transform database rows into heatmap cells
+  const typedRows = rows as Array<Record<string, unknown>>;
+  const departments: string[] = [...new Set(typedRows.map((r) => String(r.department || '')))];
+  const competencies: string[] = [...new Set(typedRows.map((r) => {
+    const domain = String(r.domain_name || '');
+    const name = String(r.competency_name || '');
+    return domain ? `${domain}: ${name}` : name;
+  }))];
 
-  const competencies = (compData || []).map((c) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const domain = (c.competency_domains as any)?.name;
-    return domain ? `${domain}: ${c.name}` : c.name;
+  const cells: HeatmapCell[] = typedRows.map((r) => {
+    const avgScore = Number(r.avg_score) || 0;
+    let level: 'weak' | 'moderate' | 'strong';
+    if (avgScore < 40) level = 'weak';
+    else if (avgScore < 70) level = 'moderate';
+    else level = 'strong';
+
+    return {
+      department: r.department as string,
+      competency: r.domain_name ? `${r.domain_name}: ${r.competency_name}` : r.competency_name as string,
+      avgScore,
+      userCount: Number(r.user_count) || 0,
+      level,
+    };
   });
-  if (competencies.length === 0) {
-    competencies.push('General');
-  }
-
-  // Get aggregated scores per department and competency
-  // Using a raw query approach since we need GROUP BY across joins
-  const cells: HeatmapCell[] = [];
-
-  for (const dept of departments) {
-    for (const comp of competencies) {
-      // Get users in this department
-      const { data: users } = await supabaseServiceRole
-        .from('profiles')
-        .select('id')
-        .eq('department', dept);
-
-      if (!users || users.length === 0) continue;
-
-      const userIds = users.map((u) => u.id);
-
-      // Extract competency name from "Domain: Name" format
-      const compName = comp.includes(':') ? comp.split(': ').pop()! : comp;
-
-      // Get scores for these users on this competency
-      const { data: scores } = await supabaseServiceRole
-        .from('user_competency_scores')
-        .select('score, competencies!inner(name)')
-        .in('user_id', userIds)
-        .eq('competencies.name', compName);
-
-      if (!scores || scores.length === 0) continue;
-
-      const avgScore = Math.round(
-        scores.reduce((sum, s) => sum + (s.score || 0), 0) / scores.length
-      );
-
-      let level: 'weak' | 'moderate' | 'strong';
-      if (avgScore < 40) level = 'weak';
-      else if (avgScore < 70) level = 'moderate';
-      else level = 'strong';
-
-      cells.push({
-        department: dept,
-        competency: comp,
-        avgScore,
-        userCount: scores.length,
-        level,
-      });
-    }
-  }
 
   // Calculate summary
   const deptAverages = new Map<string, number[]>();
